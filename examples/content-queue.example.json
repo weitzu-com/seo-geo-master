@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "site_url": "https://example.com",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "items": [
+    {
+      "id": "cq-001",
+      "status": "queued",
+      "primary_keyword": "example keyword research guide",
+      "keyword_volume": 320,
+      "keyword_difficulty": 25,
+      "intent": "informational",
+      "target_url_slug": "keyword-research-guide",
+      "wp_category_ids": [2],
+      "wp_tag_ids": [5],
+      "geo_targets": ["ChatGPT", "Perplexity"],
+      "fan_out_cluster": ["keyword research tips", "seo keyword tools"],
+      "created_at": "2026-01-01T00:00:00Z",
+      "written_at": null,
+      "wp_post_id": null,
+      "wp_published_at": null,
+      "geo_optimized_at": null,
+      "meta": { "source": "demo-run-001", "priority": 1, "notes": "Example only" }
+    }
+  ],
+  "status_lifecycle": ["queued", "in_progress", "written", "needs_review", "skipped", "published"]
+}

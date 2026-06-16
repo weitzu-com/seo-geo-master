@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "pdca-state.schema.json",
+  "title": "PDCA State",
+  "type": "object",
+  "required": ["schema_version", "site", "pdca_cycle", "safety"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "site": {
+      "type": "object",
+      "required": ["url"],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "wp_connected": { "type": "boolean" },
+        "gsc_connected": { "type": "boolean" },
+        "last_audit_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
+    "pdca_cycle": {
+      "type": "object",
+      "required": ["phase"],
+      "properties": {
+        "phase": { "type": "string", "enum": ["plan", "do", "check", "act"] },
+        "iterations_completed": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "safety": {
+      "type": "object",
+      "required": ["governor", "settlement_gate"],
+      "properties": {
+        "governor": {
+          "type": "object",
+          "required": ["mode"],
+          "properties": {
+            "mode": { "type": "string", "enum": ["audit_only", "micro_fix", "low_risk_fix", "controlled_recovery", "emergency_rollback", "high_risk_requires_approval"] },
+            "change_budget_total": { "type": "integer", "minimum": 0 },
+            "change_budget_remaining": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "settlement_gate": {
+          "type": "object",
+          "required": ["active"],
+          "properties": {
+            "active": { "type": "boolean" },
+            "started_at": { "type": ["string", "null"], "format": "date-time" },
+            "minimum_until": { "type": ["string", "null"], "format": "date-time" }
+          }
+        }
+      }
+    },
+    "scorecard": {
+      "type": "object",
+      "properties": {
+        "道_intent": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "天_timing": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "地_tech": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "将_auth": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "法_system": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "combined": { "type": "integer", "minimum": 0, "maximum": 100 }
+      }
+    }
+  }
+}

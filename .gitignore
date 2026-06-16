@@ -1,0 +1,10 @@
+# State files (runtime data, gitignored)
+state/*.json
+state/*.ndjson
+!state/.gitkeep
+
+# Examples are committed (show structure, not real data)
+!examples/*.example.json
+
+# macOS
+.DS_Store

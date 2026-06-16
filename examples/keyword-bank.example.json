@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "total_keywords": 3,
+  "keywords": [
+    { "keyword": "seo optimization guide", "volume": 320, "difficulty": 25, "intent": "informational", "geo_relevance": "high", "source": "demo-run-001", "clusters": ["seo-basics"], "created_at": "2026-01-01T00:00:00Z", "used_in_post": null },
+    { "keyword": "geo content optimization", "volume": 90, "difficulty": 15, "intent": "informational", "geo_relevance": "high", "source": "demo-run-001", "clusters": ["geo"], "created_at": "2026-01-01T00:00:00Z", "used_in_post": null },
+    { "keyword": "seo audit tools", "volume": 210, "difficulty": 35, "intent": "commercial", "geo_relevance": "medium", "source": "demo-run-001", "clusters": ["seo-tools"], "created_at": "2026-01-01T00:00:00Z", "used_in_post": null }
+  ],
+  "clusters": {
+    "seo-basics": { "label": "SEO Basics", "keywords_count": 1, "total_volume": 320 },
+    "geo": { "label": "GEO", "keywords_count": 1, "total_volume": 90 },
+    "seo-tools": { "label": "SEO Tools", "keywords_count": 1, "total_volume": 210 }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "site": {
+    "url": "https://example.com",
+    "wp_connected": true,
+    "gsc_connected": false,
+    "last_audit_at": null
+  },
+  "pdca_cycle": {
+    "cycle_id": "cycle-001",
+    "phase": "plan",
+    "phase_started_at": "2026-01-01T00:00:00Z",
+    "iterations_completed": 0,
+    "phase_history": []
+  },
+  "workflows": {
+    "plan": { "keyword_research": { "status": "pending" }, "competitor_analysis": { "status": "pending" }, "serp_analysis": { "status": "pending" }, "content_gap_analysis": { "status": "pending" }, "gsc_opportunity_discovery": { "status": "pending" } },
+    "do": { "content_queue": { "status": "pending", "total_items": 0 }, "geo_optimization": { "status": "pending" }, "meta_tags": { "status": "pending" }, "schema_markup": { "status": "pending" }, "internal_linking": { "status": "pending" } },
+    "check": { "on_page_audit": { "status": "pending" }, "technical_check": { "status": "pending" }, "rank_tracking": { "status": "pending" }, "gsc_performance": { "status": "pending" }, "content_quality_audit": { "status": "pending" }, "domain_authority_audit": { "status": "pending" }, "wp_site_audit": { "status": "pending" } },
+    "act": { "fixes_applied": { "status": "pending", "count": 0 }, "performance_report": { "status": "pending" }, "alerts_configured": false }
+  },
+  "safety": {
+    "governor": { "mode": "audit_only", "change_budget_total": 0, "change_budget_used": 0, "change_budget_remaining": 0, "hard_stops_triggered": [] },
+    "settlement_gate": { "active": false, "reason": null, "started_at": null, "minimum_until": null },
+    "hypothesis_verification": { "active_hypotheses": [], "verified_count": 0 }
+  },
+  "scorecard": { "道_intent": 0, "天_timing": 0, "地_tech": 0, "将_auth": 0, "法_system": 0, "combined": 0, "last_updated": null },
+  "metrics_snapshot": { "taken_at": null, "gsc_clicks_7d": 0, "gsc_impressions_7d": 0, "gsc_avg_position": 0, "gsc_ctr": 0, "wp_posts_count": 0, "wp_pages_count": 0 }
+}

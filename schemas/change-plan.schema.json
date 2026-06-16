@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "change-plan.schema.json",
+  "title": "Change Plan",
+  "type": "object",
+  "required": ["schema_version", "mode", "planned_changes"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "mode": { "type": "string", "enum": ["audit_only", "micro_fix", "low_risk_fix", "controlled_recovery", "emergency_rollback", "high_risk_requires_approval"] },
+    "change_budget": { "type": "integer", "minimum": 0 },
+    "planned_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "target", "description", "risk_points_base", "rollback_method"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "change_category": { "type": "string", "enum": ["repair_hygiene", "structural", "emergency"] },
+          "target": { "type": "string" },
+          "wp_post_id": { "type": "integer" },
+          "risk_points_base": { "type": "integer", "minimum": 0, "maximum": 10 },
+          "risk_points_final": { "type": "integer", "minimum": 0 },
+          "data_sources": { "type": "array", "items": { "type": "string" } },
+          "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+          "rollback_method": { "type": "string" },
+          "requires_explicit_approval": { "type": "boolean" },
+          "hypothesis_id": { "type": ["string", "null"] },
+          "hypothesis_status": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "total_risk_points": { "type": "integer", "minimum": 0 },
+    "budget_remaining": { "type": "integer", "minimum": 0 },
+    "stop_required": { "type": "boolean" },
+    "stop_reasons": { "type": "array", "items": { "type": "string" } }
+  }
+}
