@@ -1,11 +1,11 @@
 ---
 name: seo-geo-master
 description: |
-  WordPress SEO+GEO PDCA optimization pipeline. Single entry point — say "check my site"
-  or "write an article about X" and it routes to the right phase. Four-stage PDCA:
-  Plan→Do→Check→Act. Routes to aaron-seo-geo + WordPress MCP + Google Search Console.
-  Triple safety gates: Change Governor + Settlement Gate + Hypothesis Verification.
-  触发词：优化WordPress站点、SEO审计、全站检查、发布文章、帮我看看网站
+  Platform-agnostic SEO+GEO PDCA optimization pipeline v2.1. Single entry point —
+  say "check my site" or "write an article" and it routes to the right phase.
+  Four-stage PDCA: Plan→Do→Check→Act. Supports WordPress (WP MCP) AND static sites
+  (Astro/Vercel/GitHub/Cloudflare). Triple safety gates. Five-Dimension Scorecard (道天地将法).
+  触发词：SEO审计、全站检查、发布文章、帮我看看网站、GEO优化、AI引用优化
 allowed-tools: Read, Write, Edit, Bash, WebFetch, WebSearch,
   Skill, TaskCreate, TaskUpdate, TaskGet, TaskList,
   mcp__wordpress__wp_get_post, mcp__wordpress__wp_get_page,
@@ -33,295 +33,220 @@ allowed-tools: Read, Write, Edit, Bash, WebFetch, WebSearch,
 argument-hint: "<action> [site-url] [keyword|post-id]"
 ---
 
-# SEO-GEO-Master — WordPress Optimization Pipeline
+# SEO-GEO-Master v2.1 — Platform-Agnostic Optimization Pipeline
 
 > **上善若水。** Like water, it flows where needed. Speak naturally; it understands.
 > Built on three streams: **Laozi** (formlessness) · **Sun Tzu** (strategy) · **Inamori** (altruism).
+> **v2.1**: Platform-agnostic — works for WordPress, Astro, Vercel, any static site. Multi-language first.
 
 ---
+
+## v2.1 What's New (from leisa.com 15-push PDCA session)
+
+| Change | Type | Why |
+|--------|------|-----|
+| Platform-agnostic: WP + Static (Astro/Vercel/GitHub) | 🔧 | Proven on Astro+Vercel 4-language site |
+| Multi-language-first: hreflang × 4, sitemap per locale | 🆕 | Every fix ×4 languages, 12 articles |
+| Security-compliance baseline: P0-P1 DNS/Headers/Privacy | 🆕 | 6 P0 items in CHECK phase |
+| Brand vs non-brand traffic analysis (GSC) | 🆕 | Zero non-branded = key insight |
+| Competitor analysis: 五事七计 framework | 🆕 | Sun Tzu for global top-10 mapping |
+| Content internal-linking network (triangular) | 🆕 | Articles → Services → Standards |
+| Kimi WebBridge: GSC/Bing/Cloudflare dashboard | 🆕 | Browser automation for dashboards |
+| DNS security: SPF + DKIM + DMARC as ground CHECK | 🆕 | Email auth = trust signal |
 
 ## Before anything: safety check
 
 This skill defaults to **audit_only** mode. It never writes to your site unless you explicitly authorize.
 
-Every WordPress write operation passes through **three gates**:
-1. **Change Governor** — risk-point budget (0-10 per change × risk multipliers). 26 hard stops.
-2. **Settlement Gate** — after batch changes, forces 5-14 day data accumulation before next round.
-3. **Hypothesis Verification** — fixes only execute when root cause is `verified` against real WP/GSC data.
+For WordPress: triple safety gates apply.
+For static sites: git-commit + push is the deployment path; always show diff before committing.
 
 > "As a person, what is the right thing to do?" — If a change would show wrong info to a searcher, don't do it.
 
 ---
 
+## Platform Detection (auto)
+
+| Signal | Platform | Deploy Path |
+|--------|----------|-------------|
+| `wp-config.php` / WP MCP available | **WordPress** | WP MCP write ops |
+| `astro.config.mjs` / `vercel.json` / `package.json` | **Static (Astro/Vercel)** | `git add → commit → push → Vercel auto-deploy` |
+| `next.config.js` / `netlify.toml` | **Static (Next/Netlify)** | git push → auto-deploy |
+| None detected | **Manual** | User provides deploy method |
+
+---
+
 ## Phase 0: Read state
 
-Before any action, read these files (init from `examples/` if missing):
-
-```
-state/pdca-state.json         — current phase + safety gates + metrics
-state/content-queue.json      — content pipeline (6-status lifecycle)
-state/keyword-bank.json        — deduplicated keyword inventory
-```
+For WordPress: `state/pdca-state.json`, `state/content-queue.json`, `state/keyword-bank.json`
+For static sites: read project `CLAUDE.md` + `vercel.json` + `astro.config.*` for context.
 
 ---
 
 ## Routing: speak naturally
 
-The skill matches your intent, not your exact words:
-
 | You say | It does |
 |---------|---------|
-| "check my site" / "SEO audit" / "what's wrong" | Full site audit → on-page check → technical scan → GSC pull → scorecard |
-| "write about X" / "create article" | Keyword research → draft → GEO optimize → meta → schema → publish to WP |
-| "how are my rankings" / "visibility" | GSC analytics + rank tracking + period comparison |
-| "fix the issues" / "deploy" | Triple gate check → WP write ops → QA → change log |
+| "check my site" / "SEO audit" | Full site audit → on-page → technical → security compliance → GSC → scorecard |
+| "write about X" / "create article" | Research → draft → GEO optimize → meta → schema → multi-language → publish |
+| "how are my rankings" / "visibility" | GSC analytics + brand/non-brand split + rank tracking |
+| "fix the issues" / "deploy" | Priority matrix → fixes → QA → zero-residue verify |
+| "competitor / top 10" | 五事七计 analysis → global ranking →避实击虚 strategy |
 | "full cycle" / "complete workflow" | PLAN → DO → CHECK → ACT four stages |
-| "report" / "summary" | Aggregate state → performance report → top-5 priorities |
-
-Ambiguous? Routes to `/aaron:auto`.
+| "report" / "summary" | Aggregate state → scorecard → top-5 priorities |
+| "map / sitemap" | Sitemap audit + locale coverage + GSC submission |
 
 ---
 
-## Phase 1: PLAN — Intent alignment & timing
+## Phase 1: PLAN — 道·天
 
 > Sun Tzu: "Know the enemy and know yourself."
 
-### Intent research
+### Competitor analysis (五事七计)
 ```
-/aaron:discover <seed keyword>
-/aaron:compete <domain or industry>
-/aaron-seo-geo:serp-analysis
-/aaron-seo-geo:content-gap-analysis
-```
-
-### Timing analysis
-```
-mcp__google-searchconsole__find_keyword_opportunities
-mcp__google-searchconsole__get_keyword_trend
-mcp__google-searchconsole__analyze_brand_queries
+1. Identify top-10 global competitors by business alignment
+2. Score each on 五事: 道(purpose) 天(timing) 地(geography) 将(talent) 法(systems)
+3. Score on 七计: 主孰有道 天地孰得 法令孰行 兵众孰强 士卒孰练 赏罚孰明
+4. Output: 避实击虚 strategy matrix
 ```
 
-### Decision matrix
-| Trend | Competition | Strategy |
-|-------|------------|----------|
-| Rising + Low | Publish now |
-| Rising + High | Differentiate angle |
-| Stable + Low | Normal schedule |
-| Stable + High | Find subtopics (避实击虚) |
-| Declining | Don't invest |
+### Brand vs non-brand traffic audit (GSC)
+**Critical metric**: brand clicks ÷ total clicks. >80% brand = SEO is not working — people only find you when they already know your name.
 
-Output: `state/keyword-bank.json` + `state/content-queue.json`
+### Multi-language audit
+For each locale: sitemap presence, hreflang correctness, meta tag completeness, content depth parity.
 
 ---
 
-## Phase 2: DO — Content + GEO + Publish
+## Phase 2: DO — 地·将
 
 > Sun Tzu: "First win, then go to war."
 
 ### Pre-publish self-check (every article)
 1. If I searched this keyword and found this article, would I be satisfied?
-2. Does it offer something competitors don't? (Unique data? Experience? Angle?)
+2. Does it offer something competitors don't?
 3. Can I vouch for every cited source?
-
 **All three must be YES.**
 
-### Content pipeline
+### Multi-language content pipeline
 ```
-1. /aaron:write "<primary keyword>"                    → SEO draft (Three Kings)
-2. /aaron-seo-geo:geo-content-optimizer                → AI citation optimization
-3. /aaron-seo-geo:meta-tags-optimizer                  → title + meta + OG
-4. /aaron-seo-geo:schema-markup-generator              → JSON-LD
-5. mcp__wordpress__wp_create_full_post                 → publish to WP + Yoast SEO
-6. mcp__wordpress__wp_update_yoast_seo                 → fine-tune Yoast fields
+1. Write primary language version (usually EN, highest traffic)
+2. Add internal links (triangular: articles ←→ services ←→ standards)
+3. Create ZH / RU / AR translations (keep structure, adapt cultural references)
+4. Verify hreflang + canonical per locale
+5. Verify all 4 language URLs return 200
 ```
 
-### GEO content spec (summary)
-- ≥3 citeable statistics with sources
-- 25-50 word definitions for core terms
-- ≥60% H2s in Content Capsule format (question + direct answer + expansion)
-- ≥1 structured list or table
-
-### E-E-A-T checklist
-| Signal | Check |
-|--------|-------|
-| Author page | Real name, photo, credentials, Person Schema |
-| Source citations | Every stat/claim links to authoritative source |
-| Fact accuracy | No outdated data, no contradictions |
-| Trust pages | About, Contact, Privacy, Terms exist |
-| Date visibility | `dateModified` on every article |
-
-### Content refresh (existing articles)
+### Internal linking strategy
 ```
-/aaron:refresh <post-id>
+Article A ←→ Article B ←→ Article C    (triangular inter-link)
+      ↓             ↓             ↓
+  /services     /standards     /industries   (hub pages)
+      ↓             ↓             ↓
+  /contact       /about        /blog         (conversion/trust)
 ```
+
+### Security-compliance baseline (for EVERY site, before SEO)
+| Priority | Item | Verify |
+|:--:|------|--------|
+| P0 | Privacy policy (all locales) | `curl -sI /privacy` = 200 |
+| P0 | Cookie policy + banner | `grep cookie-banner` exists |
+| P1 | CSP header | `curl -sI / \| grep content-security` |
+| P1 | HSTS preload | `max-age=63072000; includeSubDomains; preload` |
+| P1 | SPF + DKIM + DMARC | `dig +short _dmarc.domain TXT` |
+| P1 | About page trust signals | Team photo/bio + credentials + equipment |
 
 ---
 
-## Phase 3: CHECK — Audit + Analytics
+## Phase 3: CHECK — 知彼知己
 
 > Sun Tzu: "If you know yourself but not the enemy, for every victory you will suffer a defeat."
 
-### WP audit
+### GSC data-driven diagnosis
 ```
-mcp__wordpress__wp_site_audit
-mcp__wordpress__wp_inspect_url
-mcp__wordpress__wp_list_sitemaps
-```
-
-### SEO audit layers
-```
-/aaron:audit <url>                                      → page-level 11-step
-/aaron:tech <domain>                                    → 9-step technical + LLM crawlers
-/aaron-seo-geo:content-quality-auditor                   → 80-item CORE-EEAT gate
-/aaron-seo-geo:domain-authority-auditor                  → 40-item CITE authority gate
+1. Pull 3-month performance: clicks, impressions, CTR, avg position
+2. Split brand vs non-brand queries
+3. If non-brand <10% → flag as CRITICAL: content strategy needed
+4. Check index coverage: indexed vs not-indexed + reasons
+5. Submit sitemaps for all locales
 ```
 
-### Performance
-```
-/aaron:visibility <domain>
-mcp__google-searchconsole__query_search_analytics
-mcp__google-searchconsole__get_top_pages
-mcp__google-searchconsole__compare_performance
-```
+### Site audit layers by platform
+**WordPress**: `wp_site_audit` → on-page → technical → content-quality (80-EEAT)
+**Static**: `curl` + `dig` + `grep` → DNS/SSL/Headers/Schema/hreflang/speed → manual content review
 
 ### Output: Five-Dimension Scorecard
 ```
-┌──────────┬──────┬──────┬────────────────────────────┐
-│ Dimension│Score │Grade │ Key Finding                  │
-├──────────┼──────┼──────┼────────────────────────────┤
-│ 道 Intent│  85  │ Good │ Intent aligned, 2 gaps      │
-│ 天 Timing│  70  │  Mid │ Missed Q2 window             │
-│ 地 Tech  │  90  │  Top │ CWV all green               │
-│ 将 Auth  │  65  │  Mid │ 3 top posts lack author     │
-│ 法 System│  80  │ Good │ PDCA cadence healthy         │
-├──────────┼──────┼──────┼────────────────────────────┤
-│ Combined │  78  │ Good │ Fix 将 first, then 天        │
-└──────────┴──────┴──────┴────────────────────────────┘
+┌──────────┬──────┬──────┬──────────────────────────────────────┐
+│ 五事      │ Score │Grade │ Key Finding                           │
+├──────────┼──────┼──────┼──────────────────────────────────────┤
+│ 道 Intent│  85  │ 良   │ FAQ answers user questions directly    │
+│ 天 Timing│  75  │ 中   │ Zero non-branded traffic              │
+│ 地 Tech  │  95  │ 优   │ CSP+HSTS+Schema+hreflang+speed 0.3s   │
+│ 将 Auth  │  80  │ 良   │ Team SVG+credentials+cases, needs photo│
+│ 法 System│  88  │ 良   │ PDCA complete, monthly cron set        │
+├──────────┼──────┼──────┼──────────────────────────────────────┤
+│ Combined │  85  │ A-   │ 地从优→固, 将→照片, 天→内容驱动       │
+└──────────┴──────┴──────┴──────────────────────────────────────┘
+```
+
+### GEO AI Citation Readiness
+```
+ChatGPT    ████████████████████░  90%  llms-full.txt + BlogPosting Schema
+Perplexity ████████████████████░  90%  same
+Google AIO █████████████████████  95%  FAQPage + Service + Organization Schema
+Gemini     ████████████████████   85%  needs Knowledge Graph entity
+Claude     ████████████████████░  90%  llms-full.txt + source citations
 ```
 
 ---
 
-## Phase 4: ACT — Fix + Refresh + Report
+## Phase 4: ACT — 法
 
 ### Priority matrix (Sun Tzu: "First win, then go to war")
 ```
-High impact × Low difficulty  → Execute now
-High impact × High difficulty → Plan
-Low impact  × Low difficulty  → Batch
+High impact × Low difficulty  → Execute now (P0 security, P1 headers)
+High impact × High difficulty → Plan (content strategy, competitor campaigns)
+Low impact  × Low difficulty  → Batch (meta tag tweaks, alt text)
 Low impact  × High difficulty → Defer or skip
 ```
 
-### Execute (after triple gate clearance)
+### Static site deploy flow
 ```
-mcp__wordpress__wp_update_post
-mcp__wordpress__wp_update_yoast_seo
-/aaron-seo-geo:internal-linking-optimizer
-```
-
-Every fix: before-snapshot → execute → after-snapshot → QA → log change-history.ndjson
-
-### Report
-```
-/aaron:report <domain>
-/aaron:watch <domain>
+1. git add -A
+2. git diff --cached --stat   ← show what's changing
+3. git commit -m "descriptive message"
+4. git push origin main
+5. sleep 25 && verify URLs return 200
 ```
 
-### Cycle complete
-- Increment `iterations_completed` in state
-- Reset phase to `plan` for next round
-- Report: scorecard deltas + next-cycle priorities
-
----
-
-## State files
-
-| File | Purpose | Format |
-|------|---------|--------|
-| `state/pdca-state.json` | Master state: phase/gates/scorecard | JSON (overwrite) |
-| `state/content-queue.json` | Content pipeline: 6-status lifecycle | JSON (overwrite) |
-| `state/keyword-bank.json` | Keyword inventory: dedup + clusters | JSON (overwrite) |
-| `state/change-history.ndjson` | Change log: risk points + QA | NDJSON (append) |
-| `state/hypotheses.json` | Hypothesis registry: 5-stage verification | JSON (overwrite) |
-| `state/run-history.ndjson` | Run log: every PDCA run | NDJSON (append) |
+### Zero-residue verification (举一反三)
+After every fix:
+```bash
+grep -rn "old_pattern" src/ | wc -l  # MUST be 0
+curl -sI "fixed_url" | head -1        # MUST be 200
+```
+发现 1 个 bug → grep 全仓找同类 → 批量修复 → 零残留验证。
 
 ---
 
 ## Integration cheatsheet
 
-### aaron-seo-geo skills
-| Phase | Activity | Command |
-|-------|----------|---------|
-| PLAN | Keyword research | `/aaron:discover` |
-| PLAN | Competitor analysis | `/aaron:compete` |
-| PLAN | Content brief | `/aaron:map` `/aaron:brief` |
-| DO | SEO writing | `/aaron:write` |
-| DO | GEO optimization | `/aaron-seo-geo:geo-content-optimizer` |
-| DO | Meta tags | `/aaron-seo-geo:meta-tags-optimizer` |
-| DO | Schema | `/aaron-seo-geo:schema-markup-generator` |
-| DO | Content refresh | `/aaron:refresh` |
-| CHECK | Page audit | `/aaron:audit` |
-| CHECK | Technical check | `/aaron:tech` |
-| CHECK | Rank tracking | `/aaron:visibility` |
-| CHECK | Content quality (80-EEAT) | `/aaron-seo-geo:content-quality-auditor` |
-| CHECK | Domain authority (40-CITE) | `/aaron-seo-geo:domain-authority-auditor` |
-| ACT | Report | `/aaron:report` |
-| ACT | Alerts | `/aaron:watch` |
-| CROSS | Intent routing | `/aaron:auto` |
+### Platform-specific tools
+| Activity | WordPress | Static (Astro/Vercel) |
+|----------|-----------|----------------------|
+| Audit | `wp_site_audit` | `curl` + `dig` + `grep` |
+| Write | `wp_create_full_post` | Write `.md` / `.astro` files |
+| Meta | `wp_update_yoast_seo` | Edit `<Base>` component props |
+| Schema | Schema plugin or manual | JSON-LD in `<script>` or `set:html` |
+| Deploy | WP save | `git push` → Vercel |
+| Sitemap | `wp_list_sitemaps` | Check `sitemap-index.xml` |
+| DNS | WP or manual | Cloudflare API / dashboard |
 
-### WordPress MCP
-| Operation | Tool |
-|-----------|------|
-| Site audit | `wp_site_audit` |
-| Create post (with Yoast + image) | `wp_create_full_post` |
-| Get / Update Yoast SEO | `wp_get_yoast_seo` / `wp_update_yoast_seo` |
-| Update post | `wp_update_post` |
-| Index status | `wp_inspect_url` |
-| Sitemaps | `wp_list_sitemaps` |
-| Upload media | `wp_upload_media` |
-| Detect editor | `wp_detect_page_builder` |
-
-### Google Search Console
-| Operation | Tool |
-|-----------|------|
-| Performance | `query_search_analytics` |
-| Top pages | `get_top_pages` |
-| Opportunities | `find_keyword_opportunities` |
-| Period compare | `compare_performance` |
-| Keyword trend | `get_keyword_trend` |
-| Brand analysis | `analyze_brand_queries` |
-
----
-
-## Six inviolable rules
-
-1. ❌ Vague approval ("do everything", "fix all") → Stop. Require specific plan.
-2. ❌ Write operation during Settlement Gate → Block. Explain waiting period.
-3. ❌ Fix without `verified` hypothesis → Block. Route to verification.
-4. ❌ Unused budget ≠ new authorization → "Reserve stays reserve."
-5. ❌ 404 after change → Stop all subsequent changes.
+### Six inviolable rules
+1. ❌ Vague approval → Stop. Require specific plan.
+2. ❌ Write operation during Settlement Gate → Block.
+3. ❌ Fix without `verified` hypothesis → Block.
+4. ❌ Unused budget ≠ new authorization.
+5. ❌ 404 after change → Stop all subsequent.
 6. ❌ Publish without CORE-EEAT gate → Block.
-
----
-
-## References
-
-| File | Content |
-|------|---------|
-| `references/SAFETY_GOVERNOR.md` | 6 modes / risk points / 26 hard stops |
-| `references/SETTLEMENT_GATE.md` | Triggers / 5-14 day waiting / exceptions |
-| `references/HYPOTHESIS_VERIFICATION.md` | 5-stage lifecycle / WP verification tiers |
-| `references/PDCA_STATE_MACHINE.md` | 6-file state machine spec |
-| `references/ROUTING_TABLE.md` | Complete decision tree |
-| `references/GEO_CONTENT_SPEC.md` | 4-element GEO spec + AI platform factors |
-| `references/INTEGRATION_MAP.md` | Full integration table |
-| `references/CHANGE_HISTORY.md` | NDJSON format + type enums |
-
----
-
-## Philosophy
-
-For the full philosophical foundation (三经合一: Laozi · Sun Tzu · Inamori), see `PHILOSOPHY.md`.
-
-> **上善若水。** Water benefits all things without contention. — Laozi
-> **知己知彼，百战不殆。** Know yourself, know your enemy, and you will never be defeated. — Sun Tzu
-> **作为人，何谓正确？** As a person, what is the right thing to do? — Inamori Kazuo
