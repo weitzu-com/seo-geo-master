@@ -75,7 +75,7 @@ Jev must never guess status codes from copy.
 
 For each `(source_passage, candidates)` call System One with **Choice** (required `no_link`) and optional **Noul** (anchor already present).
 
-Requires `TYPESAFE_API_KEY`. If missing: stop decision phase; emit deterministic inventory gaps only; do **not** substitute Opus for full-site decisions.
+Requires `TYPESAFE_API_KEY`. If missing: **inventory + deterministic gaps + retrieval shortlist only**; every record stays `review` or fact-`refuse` — **never `auto`**. Do **not** substitute Opus for full-site decisions.
 
 ### 6. Persist
 
@@ -86,9 +86,10 @@ Append one NDJSON line per decision to `state/link-decisions.ndjson` (see `schem
 | Condition | `action` |
 |-----------|----------|
 | `choice == no_link` | `refuse` |
-| `confidence < 0.6` | `review` |
-| money / commercial page as source or target | `review` (always) |
-| otherwise high confidence | `auto` (eligible for apply plan) |
+| `confidence < 0.6` (live Jev only) | `review` |
+| money / commercial page as **source or target** | `review` (always) |
+| no live Jev (`inventory-only`) | never `auto` — `review` for shortlists, `refuse` only when zero candidates |
+| otherwise high confidence + live Jev | `auto` (eligible for apply plan) |
 
 Thresholds are starting defaults; calibrate on labeled site examples when available.
 
@@ -188,9 +189,15 @@ Single-article DO linking uses the **same primitives** at small scale (one sourc
 
 ## Reference implementation
 
-See [`scripts/jev_link_graph.py`](../scripts/jev_link_graph.py): inventory fixture → decide → NDJSON → printable plan.
+See [`scripts/jev_link_graph.py`](../scripts/jev_link_graph.py): inventory fixture → gaps/decide → NDJSON → printable plan.
 
-Environment: `TYPESAFE_API_KEY`. Without it, the script still builds inventory/candidate gaps and refuses to fake decisions with a chat model.
+```bash
+python3 scripts/jev_link_graph.py --self-test
+python3 scripts/jev_link_graph.py --fixture examples/fixtures/link-inventory.example.json
+TYPESAFE_API_KEY=... python3 scripts/jev_link_graph.py --fixture ... --live --out state/link-decisions.ndjson
+```
+
+Environment: `TYPESAFE_API_KEY` required for `--live`. Without it, inventory-only mode never emits `action=auto` and refuses to fake decisions with a chat model.
 
 ---
 

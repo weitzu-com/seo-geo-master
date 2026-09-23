@@ -58,6 +58,8 @@ Mass change (>10 posts), >10 internal links in one run, batch publish, slug chan
 - Split large plans: stay under session budget; ≤10 posts per apply run unless a batch plan is approved; Settlement Gate between batches.
 - Existing caps still apply: >10 links in one run = 10 base points; >3 new links to a single post without specific approval = hard stop.
 - Never collapse 500+ planned links into one `wp_bulk_update`.
+- **Money page as source OR target** → `action=review` always (never `auto`).
+- **Inventory-only / no `TYPESAFE_API_KEY`**: never emit `action=auto`; do not treat retrieval cosine scores as calibrated judgments.
 
 ## Risk multipliers
 

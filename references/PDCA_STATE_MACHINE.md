@@ -1,6 +1,6 @@
 # PDCA State Machine Specification
 
-Six JSON/NDJSON files form the cross-session persistent state layer. All files carry `schema_version` for migration compatibility.
+Seven JSON/NDJSON files form the cross-session persistent state layer. All files carry `schema_version` for migration compatibility.
 
 ---
 

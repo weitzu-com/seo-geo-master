@@ -152,9 +152,9 @@ Follow [`references/JEV_LINK_GRAPH.md`](references/JEV_LINK_GRAPH.md):
 3. Append `state/link-decisions.ndjson`; gate with confidence / money-page policy
 4. Render plan → user approves → apply in Change Governor batches → verify
 
-Requires `TYPESAFE_API_KEY`. Without it: inventory + gap report only; do **not** run Opus as a full-site link decider.
+Requires `TYPESAFE_API_KEY` for live decisions. Without it: inventory + deterministic gaps + retrieval shortlist only (`action` never `auto`); do **not** run Opus as a full-site link decider.
 
-Reference script: [`scripts/jev_link_graph.py`](scripts/jev_link_graph.py).
+Reference script: [`scripts/jev_link_graph.py`](scripts/jev_link_graph.py) (`--self-test` for andon checks).
 
 ### Internal linking topology (heuristic only)
 

@@ -66,6 +66,7 @@
 内链是**分类流水线**（事实归代码 → TypeSafe Jev 决策 → 置信度门控 → 批准后分批写入）。规格：`references/JEV_LINK_GRAPH.md`。
 
 ```bash
+python3 scripts/jev_link_graph.py --self-test
 python3 scripts/jev_link_graph.py --fixture examples/fixtures/link-inventory.example.json
 ```
 

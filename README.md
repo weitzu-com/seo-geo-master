@@ -66,6 +66,7 @@ Seven JSON/NDJSON files track everything across sessions:
 Site-wide linking is a **classification** pipeline (facts in code → TypeSafe Jev decisions → confidence gates → approved batches). Spec: `references/JEV_LINK_GRAPH.md`. Dry-run:
 
 ```bash
+python3 scripts/jev_link_graph.py --self-test
 python3 scripts/jev_link_graph.py --fixture examples/fixtures/link-inventory.example.json
 ```
 

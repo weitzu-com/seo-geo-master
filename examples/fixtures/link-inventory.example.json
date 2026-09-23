@@ -123,6 +123,26 @@
       ]
     },
     {
+      "id": "privacy",
+      "url": "https://example.com/privacy",
+      "title": "Privacy Policy",
+      "purpose": "Legal privacy disclosures for personal data processing",
+      "http_status": 200,
+      "canonical": "https://example.com/privacy",
+      "noindex": false,
+      "thin": false,
+      "money_page": false,
+      "topic_tags": ["legal", "gdpr", "privacy"],
+      "existing_internal_links": [{"href": "https://example.com/about", "anchor": "About Us"}],
+      "passages": [
+        {
+          "id": "p-1",
+          "heading": "Controller identity",
+          "text": "This policy explains how we process personal data under applicable privacy law."
+        }
+      ]
+    },
+    {
       "id": "old_redirect",
       "url": "https://example.com/old-guide",
       "title": "Old Guide",

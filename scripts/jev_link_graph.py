@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""Jev link-graph reference: inventory → decide → NDJSON → printable plan.
+"""Jev link-graph reference: inventory → (optional Jev decide) → NDJSON → plan.
 
-First principles:
-  Facts in code. Judgments via TypeSafe System One (Jev). Writing is out of scope here.
-  Default is audit_only: never mutates a CMS.
+Toyota / first principles:
+  Facts in code. Judgments only from TypeSafe Jev when --live.
+  Without --live: inventory + retrieval gaps only — NEVER emit action=auto.
+  Default audit_only: never mutates a CMS.
 
 Usage:
-  python scripts/jev_link_graph.py --fixture examples/fixtures/link-inventory.example.json
-  python scripts/jev_link_graph.py --fixture ... --out /tmp/link-decisions.ndjson
-  TYPESAFE_API_KEY=... python scripts/jev_link_graph.py --fixture ... --live
-
-Without TYPESAFE_API_KEY (or without --live): runs deterministic retrieval + dry-run
-policy using heuristic scores, and refuses to pretend a frontier chat model decided.
+  python3 scripts/jev_link_graph.py --fixture examples/fixtures/link-inventory.example.json
+  python3 scripts/jev_link_graph.py --fixture ... --out /tmp/gaps.ndjson
+  TYPESAFE_API_KEY=... python3 scripts/jev_link_graph.py --fixture ... --live --out /tmp/link-decisions.ndjson
+  python3 scripts/jev_link_graph.py --self-test
 """
 
 from __future__ import annotations
@@ -32,6 +31,7 @@ TYPESAFE_URL = "https://api.typesafe.ai/v1/systemone"
 DEFAULT_MODEL = "jev-latest"
 CONFIDENCE_FLOOR = 0.6
 TOKEN_RE = re.compile(r"[a-z0-9]+", re.I)
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def utc_now() -> str:
@@ -73,9 +73,35 @@ def eligible_pages(pages: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+def inventory_gaps(all_pages: list[dict[str, Any]], eligible: list[dict[str, Any]]) -> list[str]:
+    """Deterministic fact report — no model judgments."""
+    gaps: list[str] = []
+    elig_urls = {p["url"] for p in eligible}
+    for p in all_pages:
+        url = p.get("url") or "?"
+        if p.get("http_status", 200) != 200:
+            gaps.append(f"exclude {url}: http_status={p.get('http_status')}")
+        elif p.get("noindex"):
+            gaps.append(f"exclude {url}: noindex")
+        elif p.get("canonical") and p["canonical"] != url:
+            gaps.append(f"exclude {url}: non-self canonical → {p['canonical']}")
+        elif p.get("thin"):
+            gaps.append(f"exclude {url}: thin/deprecated")
+        elif url not in elig_urls:
+            gaps.append(f"exclude {url}: filtered")
+    orphans = [p for p in eligible if not (p.get("existing_internal_links") or [])]
+    if orphans:
+        gaps.append(f"fact: {len(orphans)} eligible pages report zero existing internal links")
+    return gaps
+
+
 def existing_targets(page: dict[str, Any]) -> set[str]:
     links = page.get("existing_internal_links") or []
     return {link.get("href") for link in links if link.get("href")}
+
+
+def page_id(page: dict[str, Any]) -> str:
+    return page.get("id") or page["url"].rstrip("/").split("/")[-1].replace("-", "_")
 
 
 def retrieve_candidates(
@@ -103,7 +129,9 @@ def retrieve_candidates(
         if cand["url"] in already:
             continue
         blob = tokenize(
-            " ".join([cand.get("title") or "", cand.get("purpose") or "", " ".join(cand.get("topic_tags") or [])])
+            " ".join(
+                [cand.get("title") or "", cand.get("purpose") or "", " ".join(cand.get("topic_tags") or [])]
+            )
         )
         score = cosine_bow(query, blob)
         if score <= 0:
@@ -114,10 +142,11 @@ def retrieve_candidates(
     for score, cand in scored[:k]:
         results.append(
             {
-                "id": cand.get("id") or cand["url"].rstrip("/").split("/")[-1].replace("-", "_"),
+                "id": page_id(cand),
                 "url": cand["url"],
                 "title": cand.get("title") or cand["url"],
                 "purpose": cand.get("purpose") or "",
+                "money_page": bool(cand.get("money_page")),
                 "retrieval_score": round(score, 4),
             }
         )
@@ -129,14 +158,30 @@ def ensure_no_link(criteria: dict[str, str]) -> None:
         raise SystemExit("HARD STOP: Choice criteria missing required no_link option")
 
 
+def normalize_probs(probs: dict[str, float]) -> dict[str, float]:
+    total = sum(max(0.0, float(v)) for v in probs.values())
+    if total <= 0:
+        return {k: 0.0 for k in probs}
+    return {k: round(max(0.0, float(v)) / total, 6) for k, v in probs.items()}
+
+
 def policy_action(
     choice: str,
     confidence: float,
-    money_page: bool,
+    source_money: bool,
+    target_money: bool,
+    *,
+    live: bool,
 ) -> str:
+    """Poka-yoke: without live Jev, never auto. Money source OR target → review."""
+    if not live:
+        # Inventory-only / retrieval suggestion — judgment not made
+        if choice == "no_link" and not source_money:
+            return "refuse"  # no retrieval candidates is a fact, not a judgment
+        return "review"
     if choice == "no_link":
         return "refuse"
-    if money_page:
+    if source_money or target_money:
         return "review"
     if confidence < CONFIDENCE_FLOOR:
         return "review"
@@ -152,7 +197,6 @@ def suggest_anchor(passage_text: str, target_title: str) -> str | None:
     if title_l in text_l:
         start = text_l.index(title_l)
         return passage_text[start : start + len(target_title)]
-    # longest overlapping title token sequence of length >= 2
     words = title_l.split()
     for n in range(min(4, len(words)), 1, -1):
         for i in range(0, len(words) - n + 1):
@@ -183,46 +227,31 @@ def system_one(state: Any, questions: dict[str, Any], api_key: str, model: str) 
         raise SystemExit(f"TypeSafe HTTP {e.code}: {body}") from e
 
 
-def heuristic_decide(candidates: list[dict[str, Any]]) -> dict[str, Any]:
-    """Offline stand-in when --live is off. Not a chat-model substitute."""
+def retrieval_gap_record(candidates: list[dict[str, Any]]) -> dict[str, Any]:
+    """Deterministic shortlist only — not a Jev judgment."""
     if not candidates:
-        probs = {"no_link": 1.0}
         return {
-            "model": "heuristic-dry-run",
+            "model": "inventory-only",
             "choice": "no_link",
             "confidence": 1.0,
-            "probabilities": probs,
+            "probabilities": {"no_link": 1.0},
             "anchor_already_present": None,
         }
     best = max(candidates, key=lambda c: c.get("retrieval_score", 0))
-    score = float(best.get("retrieval_score") or 0)
-    # Weak overlap → refuse; mid → review-ish confidence; strong → auto-ish
-    if score < 0.15:
-        choice = "no_link"
-        confidence = 0.9
-        probs = {c["id"]: 0.05 for c in candidates}
-        probs["no_link"] = 0.85
-    else:
-        choice = best["id"]
-        confidence = min(0.95, 0.4 + score)
-        remain = max(0.0, 1.0 - confidence)
-        probs = {c["id"]: round(remain / max(len(candidates), 1), 4) for c in candidates}
-        probs[choice] = round(confidence * 0.85, 4)
-        probs["no_link"] = round(1.0 - sum(probs.values()) + probs.get("no_link", 0), 4)
-        probs["no_link"] = max(0.0, min(1.0, probs["no_link"]))
+    raw = {c["id"]: float(c.get("retrieval_score") or 0) for c in candidates}
+    raw["no_link"] = 0.05  # keep refuse visible in distribution for plan readers
+    probs = normalize_probs(raw)
     return {
-        "model": "heuristic-dry-run",
-        "choice": choice,
-        "confidence": round(confidence, 4),
+        "model": "inventory-only",
+        "choice": best["id"],
+        "confidence": 0.0,  # no calibrated judgment without Jev
         "probabilities": probs,
         "anchor_already_present": None,
     }
 
 
 def build_questions(candidates: list[dict[str, Any]]) -> dict[str, Any]:
-    criteria = {
-        c["id"]: (c.get("purpose") or c.get("title") or c["id"]) for c in candidates
-    }
+    criteria = {c["id"]: (c.get("purpose") or c.get("title") or c["id"]) for c in candidates}
     criteria["no_link"] = "None of the candidates is a useful, honest next step."
     ensure_no_link(criteria)
     return {
@@ -238,21 +267,30 @@ def build_questions(candidates: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def parse_live_answers(resp: dict[str, Any], candidates: list[dict[str, Any]]) -> dict[str, Any]:
+def parse_live_answers(resp: dict[str, Any]) -> dict[str, Any]:
     answers = resp.get("answers") or {}
     best = answers.get("best_target") or {}
     choice = best.get("choice") or "no_link"
     confidence = float(best.get("confidence") or 0)
-    probs = best.get("probabilities") or {}
+    probs = normalize_probs({k: float(v) for k, v in (best.get("probabilities") or {}).items()})
+    if "no_link" not in probs and choice != "no_link":
+        # Andon: live response omitted refuse mass — still allow choice but flag in notes upstream
+        probs = normalize_probs({**probs, "no_link": 0.0})
     noul = answers.get("anchor_already_present") or {}
-    anchor_p = noul.get("noul")
     return {
         "model": resp.get("model") or DEFAULT_MODEL,
         "choice": choice,
         "confidence": confidence,
         "probabilities": probs,
-        "anchor_already_present": anchor_p,
+        "anchor_already_present": noul.get("noul"),
     }
+
+
+def lookup_target_money(choice: str, candidates: list[dict[str, Any]]) -> bool:
+    for c in candidates:
+        if c["id"] == choice:
+            return bool(c.get("money_page"))
+    return False
 
 
 def decide_one(
@@ -264,7 +302,7 @@ def decide_one(
     model: str,
     decision_id: str,
 ) -> dict[str, Any]:
-    money = bool(source.get("money_page") or False)
+    source_money = bool(source.get("money_page"))
     if live:
         if not api_key:
             raise SystemExit(
@@ -283,12 +321,27 @@ def decide_one(
         }
         questions = build_questions(candidates)
         resp = system_one(state, questions, api_key, model)
-        parsed = parse_live_answers(resp, candidates)
+        parsed = parse_live_answers(resp)
+        notes = None
     else:
-        parsed = heuristic_decide(candidates)
+        parsed = retrieval_gap_record(candidates)
+        notes = (
+            "inventory-only: retrieval shortlist, NOT a Jev decision; "
+            "action cannot be auto without --live + TYPESAFE_API_KEY"
+        )
 
     choice = parsed["choice"]
-    action = policy_action(choice, float(parsed["confidence"]), money)
+    target_money = lookup_target_money(choice, candidates)
+    action = policy_action(
+        choice,
+        float(parsed["confidence"]),
+        source_money,
+        target_money,
+        live=live,
+    )
+    if action == "auto" and not live:
+        raise SystemExit("HARD STOP / andon: inventory-only path emitted action=auto")
+
     target_url = None
     suggested = None
     if choice != "no_link":
@@ -306,7 +359,12 @@ def decide_one(
         "heading": passage.get("heading"),
         "passage": passage.get("text"),
         "candidates": [
-            {"id": c["id"], "url": c["url"], "title": c["title"], "purpose": c.get("purpose") or ""}
+            {
+                "id": c["id"],
+                "url": c["url"],
+                "title": c["title"],
+                "purpose": c.get("purpose") or "",
+            }
             for c in candidates
         ],
         "choice": choice,
@@ -315,62 +373,76 @@ def decide_one(
         "anchor_already_present": parsed.get("anchor_already_present"),
         "action": action,
         "model": parsed["model"],
-        "money_page": money,
+        "money_page": source_money or target_money,
         "target_url": target_url,
         "suggested_anchor": suggested,
-        "notes": None if live else "dry-run heuristic (not Jev); set TYPESAFE_API_KEY and --live for real decisions",
+        "notes": notes,
     }
 
 
-def render_plan(decisions: list[dict[str, Any]]) -> str:
+def render_plan(decisions: list[dict[str, Any]], *, live: bool, gaps: list[str]) -> str:
     auto = [d for d in decisions if d["action"] == "auto"]
     review = [d for d in decisions if d["action"] == "review"]
     refuse = [d for d in decisions if d["action"] == "refuse"]
+    mode = "LIVE Jev decisions" if live else "INVENTORY-ONLY (no Jev judgments; zero auto)"
     lines = [
-        "# Internal link plan (audit_only — no CMS writes)",
+        f"# Internal link plan — {mode}",
         "",
-        f"Total decisions: {len(decisions)}",
+        "audit_only — no CMS writes",
+        "",
+        f"Total records: {len(decisions)}",
         f"  auto:   {len(auto)}",
         f"  review: {len(review)}",
         f"  refuse: {len(refuse)}",
         "",
-        "## AUTO (eligible after explicit approval + governor mode)",
+        "## Deterministic inventory gaps",
     ]
-    if not auto:
+    if not gaps:
         lines.append("(none)")
+    else:
+        lines.extend(f"- {g}" for g in gaps)
+    lines.append("")
+    lines.append("## AUTO (eligible only after explicit approval + governor mode)")
+    if not auto:
+        lines.append("(none)" if live else "(none — inventory-only cannot produce auto)")
     for d in auto:
         lines.append(
             f"- {d['source_url']} → {d.get('target_url')} "
             f"(conf={d['confidence']}, anchor={d.get('suggested_anchor')!r})"
         )
     lines.append("")
-    lines.append("## REVIEW (human or money-page gate)")
+    lines.append("## REVIEW")
     if not review:
         lines.append("(none)")
     for d in review:
+        label = "retrieval hint" if not live else "needs judgment"
         lines.append(
-            f"- {d['source_url']} ?→ {d.get('target_url') or d['choice']} "
+            f"- [{label}] {d['source_url']} ?→ {d.get('target_url') or d['choice']} "
             f"(conf={d['confidence']}, money={d.get('money_page')})"
         )
     lines.append("")
-    lines.append("## REFUSE (honest no_link)")
+    lines.append("## REFUSE / no candidates")
     if not refuse:
         lines.append("(none)")
     for d in refuse:
         lines.append(f"- {d['source_url']}#{d['passage_id']} → no_link (conf={d['confidence']})")
     lines.append("")
-    lines.append("Apply only after approval; batch under Change Governor (see SAFETY_GOVERNOR.md).")
+    lines.append("Apply only after approval; batch under Change Governor (SAFETY_GOVERNOR.md).")
+    if not live:
+        lines.append("Re-run with TYPESAFE_API_KEY and --live to obtain calibrated decisions.")
     return "\n".join(lines)
 
 
 def run(inventory_path: Path, out_path: Path | None, live: bool, model: str) -> int:
     inv = load_inventory(inventory_path)
-    pages = eligible_pages(inv["pages"])
+    all_pages = inv["pages"]
+    pages = eligible_pages(all_pages)
+    gaps = inventory_gaps(all_pages, pages)
     api_key = os.environ.get("TYPESAFE_API_KEY")
     if live and not api_key:
         print(
-            "HARD STOP: TYPESAFE_API_KEY missing. Inventory-only / dry-run allowed; "
-            "do not use Opus as full-site link decider.",
+            "HARD STOP: TYPESAFE_API_KEY missing. "
+            "Inventory + gaps only; do not use Opus as full-site link decider.",
             file=sys.stderr,
         )
         return 2
@@ -400,15 +472,103 @@ def run(inventory_path: Path, out_path: Path | None, live: bool, model: str) -> 
                 )
             )
 
+    if not live and any(d["action"] == "auto" for d in decisions):
+        raise SystemExit("HARD STOP / andon: inventory-only produced auto actions")
+
     ndjson = "\n".join(json.dumps(d, ensure_ascii=False) for d in decisions) + ("\n" if decisions else "")
     if out_path:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(ndjson, encoding="utf-8")
-        print(f"Wrote {len(decisions)} decisions → {out_path}", file=sys.stderr)
+        print(f"Wrote {len(decisions)} records → {out_path}", file=sys.stderr)
     else:
         sys.stdout.write(ndjson)
 
-    print(render_plan(decisions), file=sys.stderr)
+    print(render_plan(decisions, live=live, gaps=gaps), file=sys.stderr)
+    return 0
+
+
+def self_test() -> int:
+    """Andon / standardized work check — fail closed on invariant breaks."""
+    failures: list[str] = []
+    fixture = REPO_ROOT / "examples/fixtures/link-inventory.example.json"
+    schema_path = REPO_ROOT / "schemas/link-decisions.schema.json"
+    example_ndjson = REPO_ROOT / "examples/link-decisions.example.ndjson"
+    spec = REPO_ROOT / "references/JEV_LINK_GRAPH.md"
+
+    for p in (fixture, schema_path, example_ndjson, spec):
+        if not p.is_file():
+            failures.append(f"missing file: {p}")
+
+    # no_link hard rule
+    try:
+        ensure_no_link({"a": "x"})
+        failures.append("ensure_no_link should hard-stop without no_link")
+    except SystemExit:
+        pass
+    ensure_no_link({"a": "x", "no_link": "refuse"})
+
+    # probability normalization
+    norm = normalize_probs({"a": 2.0, "b": 2.0, "no_link": 1.0})
+    if abs(sum(norm.values()) - 1.0) > 1e-6:
+        failures.append(f"normalize_probs sum={sum(norm.values())}")
+
+    # money target forces review when live
+    if policy_action("x", 0.99, False, True, live=True) != "review":
+        failures.append("money target must review")
+    if policy_action("x", 0.99, True, False, live=True) != "review":
+        failures.append("money source must review")
+    if policy_action("x", 0.99, False, False, live=True) != "auto":
+        failures.append("high-conf non-money should auto when live")
+    if policy_action("x", 0.99, False, False, live=False) != "review":
+        failures.append("inventory-only must never auto on a choice")
+    if policy_action("no_link", 1.0, False, False, live=False) != "refuse":
+        failures.append("empty retrieval should refuse as fact")
+
+    # dry-run fixture: zero auto
+    inv = load_inventory(fixture)
+    pages = eligible_pages(inv["pages"])
+    autos = 0
+    for source in pages:
+        for passage in source.get("passages") or [{"id": "p", "text": source.get("purpose", "")}]:
+            cands = retrieve_candidates(source, passage, pages)
+            d = decide_one(source, passage, cands, False, None, DEFAULT_MODEL, "t")
+            if d["action"] == "auto":
+                autos += 1
+    if autos:
+        failures.append(f"inventory-only fixture produced {autos} auto actions")
+
+    # example NDJSON schema required keys + money review consistency
+    required = set(json.loads(schema_path.read_text())["required"])
+    for i, line in enumerate(example_ndjson.read_text().splitlines(), 1):
+        obj = json.loads(line)
+        missing = required - set(obj)
+        if missing:
+            failures.append(f"example line {i} missing {missing}")
+        if obj.get("money_page") and obj.get("action") == "auto":
+            failures.append(f"example line {i}: money_page with auto")
+        if "no_link" not in (obj.get("probabilities") or {}) and obj.get("choice") == "no_link":
+            failures.append(f"example line {i}: refuse without no_link mass")
+
+    # doc drift poka-yoke
+    pdca = (REPO_ROOT / "references/PDCA_STATE_MACHINE.md").read_text()
+    if "Six JSON" in pdca or "六 JSON" in pdca:
+        failures.append("PDCA_STATE_MACHINE still says Six files")
+    if "link-decisions.ndjson" not in pdca:
+        failures.append("PDCA_STATE_MACHINE missing link-decisions")
+    hyp = (REPO_ROOT / "references/HYPOTHESIS_VERIFICATION.md").read_text()
+    if "26 hard stops" in hyp:
+        failures.append("HYPOTHESIS_VERIFICATION still says 26 hard stops")
+    safety = (REPO_ROOT / "references/SAFETY_GOVERNOR.md").read_text()
+    for needle in ("no_link", "internal_link_plan", "TYPESAFE_API_KEY"):
+        if needle not in safety:
+            failures.append(f"SAFETY_GOVERNOR missing {needle}")
+
+    if failures:
+        print("SELF-TEST FAIL:", file=sys.stderr)
+        for f in failures:
+            print(f"  - {f}", file=sys.stderr)
+        return 1
+    print("SELF-TEST PASS", file=sys.stderr)
     return 0
 
 
@@ -417,17 +577,24 @@ def main() -> None:
     parser.add_argument(
         "--fixture",
         type=Path,
-        default=Path("examples/fixtures/link-inventory.example.json"),
+        default=REPO_ROOT / "examples/fixtures/link-inventory.example.json",
         help="Page inventory JSON",
     )
-    parser.add_argument("--out", type=Path, default=None, help="Write NDJSON decisions here")
+    parser.add_argument("--out", type=Path, default=None, help="Write NDJSON here")
     parser.add_argument(
         "--live",
         action="store_true",
         help="Call TypeSafe Jev (requires TYPESAFE_API_KEY)",
     )
     parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="Run andon / standardized-work invariant checks",
+    )
     args = parser.parse_args()
+    if args.self_test:
+        raise SystemExit(self_test())
     raise SystemExit(run(args.fixture, args.out, args.live, args.model))
 
 

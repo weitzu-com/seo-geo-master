@@ -39,12 +39,13 @@ After significant batch changes, the Settlement Gate forces a mandatory data acc
 - aaron-seo-geo audit skills (read-only)
 - Content planning and brief writing
 - Draft posts (status: draft, not published)
+- **Jev link-graph inventory / decide / plan** (0 risk; writes only `link-decisions.ndjson` + plan text — no CMS mutation)
 
 ## Blocked during gate
 
 - Publishing new posts
 - Updating published posts (title, content, meta)
-- Adding new internal links (on published posts)
+- Adding new internal links (on published posts) — including applying a link-graph plan
 - Category/tag changes (affecting published posts)
 - Plugin/theme changes
 - Schema deployments (on published posts)
