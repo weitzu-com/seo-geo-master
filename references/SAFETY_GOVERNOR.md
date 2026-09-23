@@ -1,4 +1,4 @@
-# Safety Governor — 6 Modes / Risk Points / 26 Hard Stops
+# Safety Governor — 6 Modes / Risk Points / Hard Stops
 
 > Adapted from [seo-survival-kit](https://github.com/maxschottke-spec/seo-survival-kit) under MIT License.
 
@@ -32,7 +32,7 @@ Default: `audit_only`. Mode escalation requires explicit user instruction.
 ## Risk points
 
 ### 0 points (always allowed)
-Read-only WP API calls, GSC queries, WP site audit, plugin/theme lists, content exports, HTTP health checks, plan generation, state file reads/writes.
+Read-only WP API calls, GSC queries, WP site audit, plugin/theme lists, content exports, HTTP health checks, plan generation, state file reads/writes, **full-site link-graph inventory**, **Jev/TypeSafe decision calls**, writing `link-decisions.ndjson`, and rendering an apply plan (no CMS mutation).
 
 ### 1 point
 Single Yoast field update, single alt text, single tag/category, broken link fix, typo correction.
@@ -52,6 +52,13 @@ Top-10 ranking post change, significant traffic post change, plugin activation/d
 ### 10 points
 Mass change (>10 posts), >10 internal links in one run, batch publish, slug changes on indexed posts, SEO plugin config change (sitewide), core update, permalink structure change.
 
+### Internal link-graph apply rules
+
+- An unapproved link plan is **not** permission to write. Log `internal_link_plan` at 0 points; CMS writes require explicit batch approval and a non-`audit_only` mode (typically `controlled_recovery`).
+- Split large plans: stay under session budget; ≤10 posts per apply run unless a batch plan is approved; Settlement Gate between batches.
+- Existing caps still apply: >10 links in one run = 10 base points; >3 new links to a single post without specific approval = hard stop.
+- Never collapse 500+ planned links into one `wp_bulk_update`.
+
 ## Risk multipliers
 
 | Condition | Multiplier |
@@ -69,7 +76,7 @@ Mass change (>10 posts), >10 internal links in one run, batch publish, slug chan
 
 ---
 
-## 26 hard stops
+## Hard stops
 
 Claude must immediately stop when:
 
@@ -99,6 +106,10 @@ Claude must immediately stop when:
 24. Verification relies exclusively on weak-tier sources
 25. Content update on post never crawled since last update (<7 days)
 26. Publish/update without CORE-EEAT gate for competitive keywords
+27. Link-graph Choice request missing a `no_link` / refuse option in criteria
+28. Applying internal links from a plan that was never explicitly approved
+29. Treating money/commercial pages as `action=auto` without human review
+30. Substituting a frontier chat model for full-site link decisions when `TYPESAFE_API_KEY` is absent (inventory + gaps only)
 
 ### Stop output format
 1. Why execution was stopped

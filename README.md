@@ -46,19 +46,28 @@ Adapted from [seo-survival-kit](https://github.com/maxschottke-spec/seo-survival
 
 | Gate | Function |
 |------|----------|
-| **Change Governor** | 6 modes (default: audit_only). Every change scored 0-10 risk points × multipliers. 26 hard stops. |
+| **Change Governor** | 6 modes (default: audit_only). Every change scored 0-10 risk points × multipliers. Hard stops include link-graph rules (`no_link` required, no unapproved apply). |
 | **Settlement Gate** | After batch changes → 5-14 day mandatory waiting → data verification → next round |
 | **Hypothesis Verification** | Fixes only execute when root cause is `verified` against real WP API / GSC data |
 
 ### State Persistence
 
-Six JSON/NDJSON files track everything across sessions:
+Seven JSON/NDJSON files track everything across sessions:
 - `pdca-state.json` — phase, gates, 5-dimension scorecard
 - `content-queue.json` — 6-status lifecycle (queued→in_progress→written→needs_review→skipped→published)
 - `keyword-bank.json` — deduplicated keyword inventory with clusters
 - `change-history.ndjson` — append-only change log with risk points
+- `link-decisions.ndjson` — Jev link-graph decisions (`auto` / `review` / `refuse`)
 - `hypotheses.json` — 5-stage verification registry
 - `run-history.ndjson` — append-only PDCA run log
+
+### Jev internal link graph
+
+Site-wide linking is a **classification** pipeline (facts in code → TypeSafe Jev decisions → confidence gates → approved batches). Spec: `references/JEV_LINK_GRAPH.md`. Dry-run:
+
+```bash
+python3 scripts/jev_link_graph.py --fixture examples/fixtures/link-inventory.example.json
+```
 
 ## Prerequisites
 
@@ -85,9 +94,10 @@ seo-geo-master/
 ├── PHILOSOPHY.md               # Philosophical foundation
 ├── README.md / README_CN.md   # Documentation
 ├── LICENSE                     # MIT
-├── references/                 # 8 deep-reference docs
-├── schemas/                    # JSON Schema files
-├── examples/                   # Example state templates
+├── references/                 # Deep-reference docs (incl. JEV_LINK_GRAPH.md)
+├── schemas/                    # JSON Schema files (incl. link-decisions)
+├── examples/                   # Example state + link fixtures
+├── scripts/                    # Reference runners (jev_link_graph.py)
 └── state/                      # Runtime state (gitignored)
 ```
 

@@ -17,6 +17,7 @@ From user input, extract:
 | audit/check + content/article | CHECK | `/aaron-seo-geo:content-quality-auditor` |
 | audit/check + domain/authority | CHECK | `/aaron-seo-geo:domain-authority-auditor` |
 | audit/check + index/crawl | CHECK | `wp_inspect_url` + `wp_list_sitemaps` |
+| link graph / internal links / 全站内链 / 重建内链图 / Jev 内链 | DO | `references/JEV_LINK_GRAPH.md` (audit_only plan → gated apply) |
 | write/create/publish + article/content | DO | §2.1→2.2→2.3→2.4 pipeline |
 | refresh/update + existing post | DO | `/aaron:refresh` |
 | research/discover + keyword | PLAN | `/aaron:discover` |
@@ -36,6 +37,8 @@ From user input, extract:
 | WP SEO config change | Settlement + Governor + Hypothesis Verification |
 | WP plugin/theme operation | Settlement + Governor (explicit approval required) |
 | GSC read-only query | None |
+| Link-graph inventory / Jev decide / plan NDJSON | None (0 risk; no CMS write) |
+| Approved internal-link batch apply | Settlement Gate + Change Governor |
 | State file write | None |
 
 ## Fallback

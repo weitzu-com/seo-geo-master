@@ -12,6 +12,7 @@ Six JSON/NDJSON files form the cross-session persistent state layer. All files c
 | `content-queue.json` | JSON | Overwrite | Plan/Do |
 | `keyword-bank.json` | JSON | Overwrite | Plan |
 | `change-history.ndjson` | NDJSON | Append | Act |
+| `link-decisions.ndjson` | NDJSON | Append | Do (link graph) |
 | `hypotheses.json` | JSON | Overwrite | Check/Act |
 | `run-history.ndjson` | NDJSON | Append | All |
 
@@ -28,7 +29,7 @@ Master state: site info, PDCA cycle, per-phase workflows, triple safety gates, f
   "pdca_cycle": { "cycle_id": "", "phase": "plan", "phase_started_at": null, "iterations_completed": 0, "phase_history": [] },
   "workflows": {
     "plan": { "keyword_research": {}, "competitor_analysis": {}, "serp_analysis": {}, "content_gap_analysis": {}, "gsc_opportunity_discovery": {} },
-    "do": { "content_queue": {}, "geo_optimization": {}, "meta_tags": {}, "schema_markup": {}, "internal_linking": {} },
+    "do": { "content_queue": {}, "geo_optimization": {}, "meta_tags": {}, "schema_markup": {}, "internal_linking": { "status": "pending", "subphase": "inventory", "inventory_pages": 0, "decisions_count": 0, "plan_ready": false, "apply_batches_done": 0 } },
     "check": { "on_page_audit": {}, "technical_check": {}, "rank_tracking": {}, "gsc_performance": {}, "content_quality_audit": {}, "domain_authority_audit": {}, "wp_site_audit": {} },
     "act": { "fixes_applied": {}, "performance_report": {}, "alerts_configured": false }
   },
@@ -73,7 +74,17 @@ One JSON object per line:
 {"change_id":"","timestamp":"","mode":"","type":"","wp_post_id":0,"url":"","change_category":"","description":"","before_state":"","after_state":"","risk_points":0,"data_sources":[],"confidence":"","hypothesis_id":null,"rollback_method":"","qa_status":"","settlement_gate_triggered":false}
 ```
 
-## 5. hypotheses.json
+## 5. link-decisions.ndjson (append-only)
+
+Jev link-graph decisions. Schema: `schemas/link-decisions.schema.json`. Spec: `references/JEV_LINK_GRAPH.md`.
+
+```json
+{"decision_id":"","ts":"","source_url":"","passage_id":"","candidates":[],"choice":"no_link","confidence":0,"probabilities":{},"action":"refuse","model":"jev-latest"}
+```
+
+`internal_linking` workflow subphases: `inventory` → `decide` → `plan_ready` → `apply`.
+
+## 6. hypotheses.json
 
 5-stage lifecycle: `suspected → likely → verified → fixed → monitored`
 
@@ -84,7 +95,7 @@ One JSON object per line:
 }
 ```
 
-## 6. run-history.ndjson (append-only)
+## 7. run-history.ndjson (append-only)
 
 ```json
 {"run_id":"","timestamp":"","phase":"","sub_phase":"","skill_routed_to":"","result":"","artifacts":[],"warnings":[],"errors":[]}

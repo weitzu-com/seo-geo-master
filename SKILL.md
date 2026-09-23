@@ -51,6 +51,7 @@ argument-hint: "<action> [site-url] [keyword|post-id]"
 | Brand vs non-brand traffic analysis (GSC) | 🆕 | Zero non-branded = key insight |
 | Competitor analysis: 五事七计 framework | 🆕 | Sun Tzu for global top-10 mapping |
 | Content internal-linking network (triangular) | 🆕 | Articles → Services → Standards |
+| Jev link-graph pipeline (classification, not writing) | 🆕 | `references/JEV_LINK_GRAPH.md` + `scripts/jev_link_graph.py` |
 | Kimi WebBridge: GSC/Bing/Cloudflare dashboard | 🆕 | Browser automation for dashboards |
 | DNS security: SPF + DKIM + DMARC as ground CHECK | 🆕 | Email auth = trust signal |
 
@@ -78,7 +79,7 @@ For static sites: git-commit + push is the deployment path; always show diff bef
 
 ## Phase 0: Read state
 
-For WordPress: `state/pdca-state.json`, `state/content-queue.json`, `state/keyword-bank.json`
+For WordPress: `state/pdca-state.json`, `state/content-queue.json`, `state/keyword-bank.json`, `state/link-decisions.ndjson` (when running link-graph)
 For static sites: read project `CLAUDE.md` + `vercel.json` + `astro.config.*` for context.
 
 ---
@@ -88,6 +89,7 @@ For static sites: read project `CLAUDE.md` + `vercel.json` + `astro.config.*` fo
 | You say | It does |
 |---------|---------|
 | "check my site" / "SEO audit" | Full site audit → on-page → technical → security compliance → GSC → scorecard |
+| "rebuild link map" / "全站内链" / "Jev 内链" | `references/JEV_LINK_GRAPH.md` → inventory → decide → plan (audit_only) → gated apply |
 | "write about X" / "create article" | Research → draft → GEO optimize → meta → schema → multi-language → publish |
 | "how are my rankings" / "visibility" | GSC analytics + brand/non-brand split + rank tracking |
 | "fix the issues" / "deploy" | Priority matrix → fixes → QA → zero-residue verify |
@@ -131,13 +133,33 @@ For each locale: sitemap presence, hreflang correctness, meta tag completeness, 
 ### Multi-language content pipeline
 ```
 1. Write primary language version (usually EN, highest traffic)
-2. Add internal links (triangular: articles ←→ services ←→ standards)
+2. Add internal links via Jev link-graph primitives (small scale: 1 source × few candidates; always allow no_link)
 3. Create ZH / RU / AR translations (keep structure, adapt cultural references)
 4. Verify hreflang + canonical per locale
 5. Verify all 4 language URLs return 200
 ```
 
-### Internal linking strategy
+### Internal linking — Jev link graph (primary)
+
+> Facts in code. Decisions in Jev. Writing in frontier. Default: **audit_only plan**, never silent CMS write.
+
+**Triggers:** "rebuild internal link map", "site-wide internal linking", "全站内链", "重建内链图", "Jev 内链审计", "link graph".
+
+Follow [`references/JEV_LINK_GRAPH.md`](references/JEV_LINK_GRAPH.md):
+
+1. Inventory → extract → retrieve 3–10 candidates → deterministic filters
+2. TypeSafe Jev Choice (+ optional Noul), **criteria must include `no_link`**
+3. Append `state/link-decisions.ndjson`; gate with confidence / money-page policy
+4. Render plan → user approves → apply in Change Governor batches → verify
+
+Requires `TYPESAFE_API_KEY`. Without it: inventory + gap report only; do **not** run Opus as a full-site link decider.
+
+Reference script: [`scripts/jev_link_graph.py`](scripts/jev_link_graph.py).
+
+### Internal linking topology (heuristic only)
+
+Use after decisions when multiple honest targets exist — never override `refuse` / `review`:
+
 ```
 Article A ←→ Article B ←→ Article C    (triangular inter-link)
       ↓             ↓             ↓
@@ -145,6 +167,8 @@ Article A ←→ Article B ←→ Article C    (triangular inter-link)
       ↓             ↓             ↓
   /contact       /about        /blog         (conversion/trust)
 ```
+
+Fallback for single-article polish without TypeSafe: `aaron-seo-geo:internal-linking-optimizer` (still prefer refuse over forced links).
 
 ### Security-compliance baseline (for EVERY site, before SEO)
 | Priority | Item | Verify |

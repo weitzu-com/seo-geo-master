@@ -46,19 +46,28 @@
 
 | 门 | 作用 |
 |----|------|
-| **Change Governor** | 6 种模式（默认 audit_only）。每个变更计风险积分 0-10 × 乘数。26 条硬停止。 |
+| **Change Governor** | 6 种模式（默认 audit_only）。每个变更计风险积分 0-10 × 乘数。含内链图硬停（必须 `no_link`、禁止未批准写入）。 |
 | **Settlement Gate** | 批量变更后 → 5-14 天强制等待 → 数据验证 → 下一轮 |
 | **Hypothesis Verification** | 修复仅在根因被真实 WP API / GSC 数据验证为 `verified` 时执行 |
 
 ### 状态持久化
 
-6 个 JSON/NDJSON 文件跨会话追踪一切：
+7 个 JSON/NDJSON 文件跨会话追踪一切：
 - `pdca-state.json` — 阶段、门禁、五维评分卡
 - `content-queue.json` — 6 状态生命周期
 - `keyword-bank.json` — 去重关键词库存
 - `change-history.ndjson` — 追加式变更日志
+- `link-decisions.ndjson` — Jev 内链决策（`auto` / `review` / `refuse`）
 - `hypotheses.json` — 5 阶段假设验证
 - `run-history.ndjson` — 追加式 PDCA 运行日志
+
+### Jev 全站内链图
+
+内链是**分类流水线**（事实归代码 → TypeSafe Jev 决策 → 置信度门控 → 批准后分批写入）。规格：`references/JEV_LINK_GRAPH.md`。
+
+```bash
+python3 scripts/jev_link_graph.py --fixture examples/fixtures/link-inventory.example.json
+```
 
 ## 前提条件
 
