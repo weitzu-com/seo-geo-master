@@ -68,6 +68,26 @@ For SEO/GEO, this means:
 
 ---
 
+## Decision layering (法 · Systems)
+
+> **Facts belong to code. Judgments belong to a decision model. Writing belongs to a frontier model.**
+
+Site-wide internal linking is a classification problem at scale — thousands of yes/no calls — not a writing problem. Paying frontier chat prices to invent link graphs is wasteful and invites forced, dishonest links.
+
+| Layer | Owner | Example |
+|-------|-------|---------|
+| **Facts** | Crawl / CMS / code | Status 200, canonical, noindex, existing hrefs |
+| **Judgments** | TypeSafe Jev (System One) | Choice among candidates + `no_link`; Noul for anchor presence |
+| **Policy** | Code + confidence | `auto` / `review` / `refuse`; money pages always review |
+| **Writing** | Frontier LLM (sparingly) | New articles; rewrite one sentence only when no anchor exists |
+| **Mutation** | Change Governor | Approved batches only; Settlement Gate between batches |
+
+This is 法 (systems): Laozi's simplicity (thin pipeline), Sun Tzu's terrain (地 includes the link graph), Inamori's origin (**refusal** when no honest next step — do not mislead the reader).
+
+Spec: [`references/JEV_LINK_GRAPH.md`](references/JEV_LINK_GRAPH.md).
+
+---
+
 ## The confluence
 
 ```

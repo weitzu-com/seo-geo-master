@@ -15,7 +15,7 @@
   },
   "workflows": {
     "plan": { "keyword_research": { "status": "pending" }, "competitor_analysis": { "status": "pending" }, "serp_analysis": { "status": "pending" }, "content_gap_analysis": { "status": "pending" }, "gsc_opportunity_discovery": { "status": "pending" } },
-    "do": { "content_queue": { "status": "pending", "total_items": 0 }, "geo_optimization": { "status": "pending" }, "meta_tags": { "status": "pending" }, "schema_markup": { "status": "pending" }, "internal_linking": { "status": "pending" } },
+    "do": { "content_queue": { "status": "pending", "total_items": 0 }, "geo_optimization": { "status": "pending" }, "meta_tags": { "status": "pending" }, "schema_markup": { "status": "pending" }, "internal_linking": { "status": "pending", "subphase": "inventory", "inventory_pages": 0, "decisions_count": 0, "plan_ready": false, "apply_batches_done": 0 } },
     "check": { "on_page_audit": { "status": "pending" }, "technical_check": { "status": "pending" }, "rank_tracking": { "status": "pending" }, "gsc_performance": { "status": "pending" }, "content_quality_audit": { "status": "pending" }, "domain_authority_audit": { "status": "pending" }, "wp_site_audit": { "status": "pending" } },
     "act": { "fixes_applied": { "status": "pending", "count": 0 }, "performance_report": { "status": "pending" }, "alerts_configured": false }
   },

@@ -14,7 +14,7 @@
 | DO | Meta tags | — | `meta-tags-optimizer` |
 | DO | Schema | — | `schema-markup-generator` |
 | DO | Content refresh | `/aaron:refresh` | `content-refresher` |
-| DO | Internal linking | — | `internal-linking-optimizer` |
+| DO | Internal linking | — | **Jev link-graph** (`references/JEV_LINK_GRAPH.md`) primary; `internal-linking-optimizer` fallback |
 | CHECK | Page audit | `/aaron:audit` | `on-page-seo-auditor` |
 | CHECK | Technical check | `/aaron:tech` | `technical-seo-checker` |
 | CHECK | Rank tracking | `/aaron:visibility` | `rank-tracker` |

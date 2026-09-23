@@ -45,7 +45,9 @@ One JSON object per line, append-only. No file size limit — user rotates perio
 | `category_create` / `tag_create` | Category/tag creation |
 | `category_update` / `tag_update` | Category/tag update |
 | `media_alt_update` | Image alt text update |
-| `internal_link_add` | Internal link addition |
+| `internal_link_add` | Internal link addition (single apply) |
+| `internal_link_plan` | Link-graph plan generated (audit_only; no CMS write) |
+| `internal_link_batch_apply` | Approved batch apply of planned internal links |
 | `schema_add` | Schema markup addition |
 | `plugin_activate` / `plugin_deactivate` | Plugin status change |
 | `theme_update` | Theme update |

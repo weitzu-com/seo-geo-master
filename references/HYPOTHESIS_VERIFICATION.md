@@ -72,11 +72,11 @@ Example: verified that `/blog/seo-tips/` lacks focus keyword. Planned to also fi
 
 ## Integration with hard stops
 
-From `SAFETY_GOVERNOR.md` 26 hard stops:
+From `SAFETY_GOVERNOR.md` hard stops:
 - **Stop 22**: Hypothesis not at `verified` → block fix
 - **Stop 23**: Fix scope exceeds verified scope → block
 - **Stop 24**: Verification from weak-tier sources only → block
-
+- **Stops 27–30**: Link-graph invariants (`no_link` required, no unapproved apply, money-page review, no Opus full-site substitute)
 ---
 
 ## Reference

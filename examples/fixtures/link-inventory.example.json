@@ -1,0 +1,160 @@
+{
+  "schema_version": "1.0.0",
+  "site_url": "https://example.com",
+  "pages": [
+    {
+      "id": "tech_checklist",
+      "url": "https://example.com/technical-seo-checklist",
+      "title": "Technical SEO Checklist",
+      "purpose": "Help an SEO specialist run a technical audit and find crawl issues",
+      "http_status": 200,
+      "canonical": "https://example.com/technical-seo-checklist",
+      "noindex": false,
+      "thin": false,
+      "money_page": false,
+      "topic_tags": ["technical", "crawl", "audit"],
+      "existing_internal_links": [],
+      "passages": [
+        {
+          "id": "p-12",
+          "heading": "Find pages with weak internal discovery",
+          "text": "A crawl can reveal useful pages that receive few contextual internal links."
+        }
+      ]
+    },
+    {
+      "id": "orphan_pages",
+      "url": "https://example.com/orphan-pages",
+      "title": "How to Find and Fix Orphan Pages",
+      "purpose": "Diagnose pages with no useful internal links and reconnect them",
+      "http_status": 200,
+      "canonical": "https://example.com/orphan-pages",
+      "noindex": false,
+      "thin": false,
+      "money_page": false,
+      "topic_tags": ["orphan", "internal-links", "crawl"],
+      "existing_internal_links": [],
+      "passages": [
+        {
+          "id": "p-1",
+          "heading": "What is an orphan page",
+          "text": "Orphan pages have no contextual internal links pointing to them from the rest of the site."
+        }
+      ]
+    },
+    {
+      "id": "broken_links",
+      "url": "https://example.com/broken-links",
+      "title": "How to Find Broken Links",
+      "purpose": "Find links that point to unavailable destinations",
+      "http_status": 200,
+      "canonical": "https://example.com/broken-links",
+      "noindex": false,
+      "thin": false,
+      "money_page": false,
+      "topic_tags": ["broken", "links", "404"],
+      "existing_internal_links": [],
+      "passages": [
+        {
+          "id": "p-1",
+          "heading": "Scan for 404s",
+          "text": "Broken links send users and crawlers to error pages."
+        }
+      ]
+    },
+    {
+      "id": "about",
+      "url": "https://example.com/about",
+      "title": "About Us",
+      "purpose": "Company biography and founding story",
+      "http_status": 200,
+      "canonical": "https://example.com/about",
+      "noindex": false,
+      "thin": false,
+      "money_page": false,
+      "topic_tags": ["about", "company"],
+      "existing_internal_links": [],
+      "passages": [
+        {
+          "id": "p-3",
+          "heading": "Our story",
+          "text": "We started in 2019 with a small team in Apex."
+        }
+      ]
+    },
+    {
+      "id": "pricing",
+      "url": "https://example.com/pricing",
+      "title": "Pricing",
+      "purpose": "Commercial pricing and plans",
+      "http_status": 200,
+      "canonical": "https://example.com/pricing",
+      "noindex": false,
+      "thin": false,
+      "money_page": true,
+      "topic_tags": ["pricing", "plans", "commercial"],
+      "existing_internal_links": [],
+      "passages": [
+        {
+          "id": "p-8",
+          "heading": "Compare plans",
+          "text": "Choose the plan that matches your SEO throughput needs."
+        }
+      ]
+    },
+    {
+      "id": "features",
+      "url": "https://example.com/features",
+      "title": "Features",
+      "purpose": "Product capability overview",
+      "http_status": 200,
+      "canonical": "https://example.com/features",
+      "noindex": false,
+      "thin": false,
+      "money_page": false,
+      "topic_tags": ["features", "product", "seo"],
+      "existing_internal_links": [],
+      "passages": [
+        {
+          "id": "p-1",
+          "heading": "What you get",
+          "text": "Automation for audits, content, and internal linking."
+        }
+      ]
+    },
+    {
+      "id": "privacy",
+      "url": "https://example.com/privacy",
+      "title": "Privacy Policy",
+      "purpose": "Legal privacy disclosures for personal data processing",
+      "http_status": 200,
+      "canonical": "https://example.com/privacy",
+      "noindex": false,
+      "thin": false,
+      "money_page": false,
+      "topic_tags": ["legal", "gdpr", "privacy"],
+      "existing_internal_links": [{"href": "https://example.com/about", "anchor": "About Us"}],
+      "passages": [
+        {
+          "id": "p-1",
+          "heading": "Controller identity",
+          "text": "This policy explains how we process personal data under applicable privacy law."
+        }
+      ]
+    },
+    {
+      "id": "old_redirect",
+      "url": "https://example.com/old-guide",
+      "title": "Old Guide",
+      "purpose": "Deprecated",
+      "http_status": 301,
+      "canonical": "https://example.com/technical-seo-checklist",
+      "noindex": false,
+      "thin": true,
+      "money_page": false,
+      "topic_tags": [],
+      "existing_internal_links": [],
+      "passages": []
+    }
+  ]
+}
